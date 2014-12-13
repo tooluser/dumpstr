@@ -25,8 +25,6 @@
 (defn get-user [un]
   (db/get-user un))
 
-(derive ::admin ::user)
-
 (defroutes admin-routes
   (GET "/show-user/:user" [user] (user/show-user user))
   (GET "/bye" [] (str "ok bye, admin")))
