@@ -5,10 +5,9 @@
 
 ;; Local access only for now
 (def client-opts
-  (let [provider (BasicAWSCredentials. "dan" "dan")]
-    {:access-key "ACCESS_KEY"
-     :secret-key "SECRET_KEY"
-     :endpoint "http://localhost:8000"}))
+  {:access-key "ACCESS_KEY"
+   :secret-key "SECRET_KEY"
+   :endpoint "http://localhost:8000"})
 
 
 (defn create-tables []

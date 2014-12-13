@@ -11,7 +11,8 @@
    [cemerick.friend :as friend]
    (cemerick.friend [workflows :as workflows]
                     [credentials :as creds])
-   [dumpstr.core.db :as db]))
+   [dumpstr.core.db :as db]
+   [dumpstr.core.user :as user]))
 
 ;; Dummy user DB
 (def users {"dan" {:username "dan"
@@ -27,7 +28,7 @@
 (derive ::admin ::user)
 
 (defroutes admin-routes
-  (GET "/show-user/:user" [user] (str (get-user user)))
+  (GET "/show-user/:user" [user] (user/show-user user))
   (GET "/bye" [] (str "ok bye, admin")))
 
 (defroutes user-routes
@@ -45,7 +46,7 @@
 
   ;; no auth required
   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
-;;  (GET "/create-user" [] (str "I will create user" ))
+  (POST "/create-user" {:keys [params]} (user/create-user params))
   (friend/logout  (ANY "/logout" request (resp/redirect "/")))
 
   ;; (GET ["/u/:cmd", :cmd #"[0-9]+"]  [cmd]  (str "Numeric cmd " cmd))
