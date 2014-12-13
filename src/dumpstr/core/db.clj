@@ -24,4 +24,7 @@
 
 (defn get-user [username]
   (far/get-item client-opts :users {:username username}))
+
+(defn num-users []
+  (:item-count (far/describe-table client-opts :users)))
     
