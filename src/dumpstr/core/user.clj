@@ -31,5 +31,5 @@
               (db/create-user (assoc user :roles roles :password password))
               (assoc resp :success true)))))
     
-(defn show-user [user]
-  (str (db/get-user user)))
+(defn get-user [user]
+  (db/get-user :username user))
