@@ -11,6 +11,7 @@
    [cemerick.friend :as friend]
    (cemerick.friend [workflows :as workflows]
                     [credentials :as creds])
+   [cheshire.core :as json]
    [dumpstr.core.db :as db]
    [dumpstr.core.user :as user]))
 
@@ -44,7 +45,8 @@
 
   ;; no auth required
   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
-  (POST "/create-user" {:keys [params]} (user/create-user params))
+  (POST "/create-user" {:keys [params]}
+    (json/generate-string (user/create-user params)))
   (friend/logout  (ANY "/logout" request (resp/redirect "/")))
 
   ;; (GET ["/u/:cmd", :cmd #"[0-9]+"]  [cmd]  (str "Numeric cmd " cmd))

@@ -10,6 +10,7 @@
                  [com.cemerick/friend "0.2.1"]
 ;;                 [com.cemerick/hiccup "1.0.5"];;
                  [hiccup "1.0.5"]
+                 [cheshire "5.4.0"]
                  [com.amazonaws/aws-java-sdk "1.8.6"
                   :exclusions [joda-time]]
                  ]
