@@ -15,17 +15,6 @@
    [dumpstr.core.db :as db]
    [dumpstr.core.user :as user]))
 
-;; Dummy user DB
-(def users {"dan" {:username "dan"
-                   :password (creds/hash-bcrypt "idan")
-                   :roles #{::admin}}
-            "bob" {:username "bob",
-                   :password (creds/hash-bcrypt "gobob")
-                   :roles #{::user}}})
-
-(defn get-user [un]
-  (db/get-user un))
-
 (defroutes admin-routes
   (GET "/show-user/:user" [user] (user/show-user user))
   (GET "/bye" [] (str "ok bye, admin")))
@@ -37,11 +26,11 @@
 (defroutes app-routes
   ;; User auth routes
   (context "/u" request
-    (friend/wrap-authorize user-routes #{::user}))
+    (friend/wrap-authorize user-routes #{:user}))
 
   ;; Admin auth routes
   (context "/a" request
-    (friend/wrap-authorize admin-routes  #{::admin}))
+    (friend/wrap-authorize admin-routes  #{:admin}))
 
   ;; no auth required
   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
@@ -65,9 +54,9 @@
     (friend/authenticate
      {:allow-anon? true
       :unauthenticated-handler #(workflows/http-basic-deny "Littr" %)
-      :credential-fn (partial creds/bcrypt-credential-fn get-user)
+      :credential-fn (partial creds/bcrypt-credential-fn db/get-user)
       :workflows [(workflows/http-basic
-                   :credential-fn #(creds/bcrypt-credential-fn users %)
+                   :credential-fn #(creds/bcrypt-credential-fn db/get-user %)
                    :realm "Littr")]})))
 
 (def app (site secured-app))
