@@ -18,11 +18,14 @@
    [:username :s]
    {:throughput {:read 1 :write 1}
     :block? true
-    :gsindexes [{:name "email"
+    :gsindexes [{:name "id"
+                 :hash-keydef [:id :s]
+                 :projection :all
+                 :throughput {:read 1 :write 1}}
+                {:name "email"
                  :hash-keydef [:email :s]
                  :projection :all
-                 :throughput {:read 1 :write 1}}]}
-   ))
+                 :throughput {:read 1 :write 1}}]}))
 
 
 (defn num-users []
@@ -45,5 +48,8 @@
     (far/get-item client-opts :users {:username value})
     :email
     (seq (far/scan client-opts :users
-                   {:attr-conds {:email [:eq value]}}))))
+                   {:attr-conds {:email [:eq value]}}))
+    :id
+    (seq (far/scan client-opts :users
+                   {:attr-conds {:id [:eq value]}}))))
     

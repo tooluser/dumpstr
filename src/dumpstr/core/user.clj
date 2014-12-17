@@ -7,24 +7,27 @@
 ;;(derive ::admin ::user)
 
 (def valid-user-keys    [:id :username :email :password :photo-url])
-(def required-user-keys [:id :username :email :password])
+(def required-user-keys [:username :email :password])
 
 
 (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
+
+(defn generate-uuid [] (str (java.util.UUID/randomUUID)))
 
 (defn- should-be-admin? [user]
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
 (defn create-user [params]
   (let [{:keys [username email id]} params
+        id (or id (generate-uuid))
         resp {:username username :email email :id id}]
     (cond
       (db/get-user :username username)
       (assoc resp :success false :error "Username already exists")
       (db/get-user :email email)
       (assoc resp :success false :error "Email already exists")
-;      (db/get-user :id id)
-;      (assoc resp :success false :error "ID already exists")
+      (and id (db/get-user :id id))
+      (assoc resp :success false :error "ID already exists")
       (not (reduce #(and %1 (contains? params %2))
                    true required-user-keys))
       (assoc resp :success false :error "Incomplete request")
