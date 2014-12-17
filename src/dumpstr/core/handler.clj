@@ -13,10 +13,11 @@
                     [credentials :as creds])
    [cheshire.core :as json]
    [dumpstr.core.db :as db]
+   [dumpstr.core.admin :as admin]
    [dumpstr.core.user :as user]))
 
 (defroutes admin-routes
-  (GET "/show-user/:user" [user] (user/show-user user))
+  (GET "/show-user/:user" [user] (admin/show-user user))
   (GET "/bye" [] (str "ok bye, admin")))
 
 (defroutes user-routes
