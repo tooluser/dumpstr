@@ -17,9 +17,9 @@
 (defn- should-be-admin? [user]
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
-(defn create-user [params]
-  (let [{:keys [username email id]} params
-        id (or id (generate-uuid))
+(defn create-user [{:keys [username email id] :as params}]
+  (let [id (or id (generate-uuid))
+        params (assoc params :id id)
         resp {:username username :email email :id id}]
     (cond
       (db/get-user :username username)

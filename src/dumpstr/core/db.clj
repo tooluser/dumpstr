@@ -32,14 +32,14 @@
   (:item-count (far/describe-table client-opts :users)))
 
 (defn create-user
-  [{:keys [username email password photo-url roles] :as request}]
+  [{:keys [username email password photo-url roles id] :as request}]
   (dbg request)
   (far/put-item client-opts :users
                 (cond-> {:username username
                          :email email
                          :password password
                          :roles (far/freeze roles)
-                         :id (inc (num-users))}
+                         :id id}
                   photo-url (assoc :photo-url photo-url))))
 
 (defn get-user [key value]
