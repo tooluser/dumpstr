@@ -56,7 +56,8 @@
       :unauthenticated-handler #(workflows/http-basic-deny "Littr" %)
       :credential-fn (partial creds/bcrypt-credential-fn db/get-user)
       :workflows [(workflows/http-basic
-                   :credential-fn #(creds/bcrypt-credential-fn db/get-user %)
+                   :credential-fn #(creds/bcrypt-credential-fn
+                                    (partial db/get-user :username)  %)
                    :realm "Littr")]})))
 
 (def app (site secured-app))
