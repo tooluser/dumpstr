@@ -24,6 +24,12 @@
   (GET "/hi" [] (str "well hi, " (:username (friend/current-authentication))))
   (GET "/bye" [] (str "ok bye, ")))
 
+(defn build-json-response [{:keys [success] :as  params}]
+  (let [response (resp/response (json/generate-string params))]
+    (if success
+      response
+      (resp/status response 400))))
+
 (defroutes app-routes
   ;; User auth routes
   (context "/u" request
@@ -36,7 +42,7 @@
   ;; no auth required
   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
   (POST "/create-user" {:keys [params]}
-    (json/generate-string (user/create-user params)))
+    (build-json-response (user/create-user params)))
   (friend/logout  (ANY "/logout" request (resp/redirect "/")))
 
   ;; (GET ["/u/:cmd", :cmd #"[0-9]+"]  [cmd]  (str "Numeric cmd " cmd))
