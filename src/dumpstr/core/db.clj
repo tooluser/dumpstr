@@ -15,11 +15,11 @@
   (far/create-table
    client-opts
    :users
-   [:username :s]
+   [:id :s]
    {:throughput {:read 1 :write 1}
     :block? true
-    :gsindexes [{:name "id"
-                 :hash-keydef [:id :s]
+    :gsindexes [{:name "username"
+                 :hash-keydef [:username :s]
                  :projection :all
                  :throughput {:read 1 :write 1}}
                 {:name "email"
@@ -33,23 +33,16 @@
 
 (defn create-user
   [{:keys [username email password photo-url roles id] :as request}]
-  (dbg request)
-  (far/put-item client-opts :users
-                (cond-> {:username username
-                         :email email
-                         :password password
-                         :roles (far/freeze roles)
-                         :id id}
-                  photo-url (assoc :photo-url photo-url))))
+  (far/put-item client-opts :users request))
 
 (defn get-user [key value]
   (case key
-    :username
-    (far/get-item client-opts :users {:username value})
+    :id
+    [(far/get-item client-opts :users {:id value})]
     :email
     (seq (far/scan client-opts :users
                    {:attr-conds {:email [:eq value]}}))
-    :id
+    :username
     (seq (far/scan client-opts :users
-                   {:attr-conds {:id [:eq value]}}))))
+                   {:attr-conds {:username [:eq value]}}))))
     
