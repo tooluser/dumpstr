@@ -52,16 +52,20 @@
       (:success (create-user {:password "secret"})) => truthy)
   (fact "User created must have a password"
       (:success (create-user {:username "dummy"})) => falsey)
-  ;; (fact "User created with dupe username fails"
-  ;;     (:success (do
-  ;;                 (create-user {:id "1", :username "samers"})
-  ;;                 (create-user {:id "2", :username "samers"}))) =>
-  ;;                 falsey)
-  ;;  (fact "User created with dupe email fails"
-  ;;     (:success (do
-  ;;                 (create-user {:id "1", :email "samers@test.com"})
-  ;;                 (create-user {:id "2", :username "samers@test.com"}))) =>
-  ;;                 falsey)
+  (fact "User created with dupe username fails"
+      (:success (do
+                  (create-user {:id "1", :username "samers"
+                                :password "s"})
+                  (create-user {:id "2", :username "samers"
+                                :password "s"}))) =>
+                  falsey)
+   (fact "User created with dupe email fails"
+      (:success (do
+                  (create-user {:id "1", :email "samers@test.com"
+                                :password "s"})
+                  (create-user {:id "2", :username "samers@test.com"
+                                :password "s"}))) =>
+                  falsey)
   ;; How to test this here?
   ;;        (fact "Race condition for dupe username resolves correctly" true => falsey))
   )
