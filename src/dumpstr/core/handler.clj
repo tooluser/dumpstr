@@ -17,14 +17,13 @@
    [dumpstr.core.user :as user]))
 
 (defroutes admin-routes
-  (GET "/show-user/:user" [user] (admin/show-user user))
-  (GET "/bye" [] (str "ok bye, admin")))
+  (GET "/show-user/:user" [user] (admin/show-user user)))
 
 (defroutes user-routes
   (GET "/hi" [] (str "well hi, " (:username (friend/current-authentication))))
   (GET "/bye" [] (str "ok bye, ")))
 
-(defn build-json-response [{:keys [success] :as  params}]
+(defn- build-json-response [{:keys [success] :as  params}]
   (let [response (resp/response (json/generate-string params))]
     (if success
       response
