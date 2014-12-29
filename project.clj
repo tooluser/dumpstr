@@ -14,8 +14,10 @@
                  [com.amazonaws/aws-java-sdk "1.8.6"
                   :exclusions [joda-time]]
                  ]
-  :plugins [[lein-ring "0.8.13"]]
+  :plugins [[lein-ring "0.8.13"]
+            [lein-midje "3.1.3"]]
   :ring {:handler dumpstr.core.handler/app}
   :profiles
-  {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
+  {:dev {:dependencies [[midje "1.6.3" :exclusions [org.clojure/clojure]]
+                        [javax.servlet/servlet-api "2.5"]
                         [ring-mock "0.1.5"]]}})
