@@ -62,6 +62,7 @@
             (get-user-roles "tooluser") => (contains :admin :user)
             (get-user-roles "matt") => (contains :admin :user))
         (fact "Non-blessed users not admin"
+            (get-user-roles "first") => irrelevant
             (get-user-roles "chump") => (just :user))
         (fact "Users created without ids get different ids"
             (:id (create-user {:username "waldorf" :email "w@test.com"}))
