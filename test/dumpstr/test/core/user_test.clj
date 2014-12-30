@@ -121,7 +121,7 @@
              (:id response) => (:id created)))
        (fact "Can lookup user by email"
            (let [created (create-user {:email "t1@t.com" :password "secret"})
-                 response (get-user :username "t1@t.com")]
+                 response (get-user :email "t1@t.com")]
              (:success response) => truthy
              (:id response) => (:id created)))
        (fact "Cannot lookup user by random tag"
