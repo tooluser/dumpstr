@@ -129,5 +129,10 @@
                                        :password "secret"
                                        :photo-url "http://beautiful.me"})
                  response (get-user :photo-url "http://beautiful.me")]
-             (:success response) => falsey))))
+             (:success response) => falsey))
+       (fact "Random tags are not returned"
+           (:success (create-user {:username "tbutton"
+                                   :password "secret"
+                                   :rando "sauce"})) => truthy
+           (:rando (get-user :username "tbutton")) => falsey)))
 
