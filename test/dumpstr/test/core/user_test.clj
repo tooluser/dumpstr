@@ -81,7 +81,7 @@
                                       :password "s"})
                         (create-user {:id "1", :username "differs"
                                       :password "s"}))) =>
-                                      false)
+                                      falsey)
         (fact "User created with dupe username fails"
             (:success (do
                         (create-user {:id "1", :username "samers"

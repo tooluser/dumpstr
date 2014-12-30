@@ -28,13 +28,16 @@
                    true required-user-keys))
       (assoc params :success false :error "Incomplete request")
       :else
-      (let [roles
-            (if (should-be-admin? username) #{:admin :user} #{:user})
-            password (creds/hash-bcrypt (:password params))]
-        (db/create-user (assoc params :roles roles :password password))
-        (assoc (select-keys params returned-user-keys)
-               :roles roles
-               :success true)))))
+      (let [roles (if (should-be-admin? username)
+                    #{:admin :user} #{:user})
+            password (creds/hash-bcrypt (:password params))
+            [user err] (db/create-user (assoc params :roles roles
+                                              :password password))]
+        (if user
+          (assoc (select-keys user returned-user-keys)
+                 :roles roles
+                 :success true)
+          {:success false :err err})))))
 
 ;; (defn create-user [{:keys [username email id] :as params}]
 ;;   (let [id (or id (generate-uuid))

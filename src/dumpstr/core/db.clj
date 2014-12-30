@@ -1,7 +1,8 @@
 (ns dumpstr.core.db
   (:require
    [taoensso.faraday :as far])
-  (:import  [com.amazonaws.auth BasicAWSCredentials]))
+  (:import  [com.amazonaws.auth BasicAWSCredentials]
+            [com.amazonaws.services.dynamodbv2.model ConditionalCheckFailedException]))
 
 ;; Local access only for now
 (defn client-opts []
@@ -27,13 +28,18 @@
                  :projection :all
                  :throughput {:read 1 :write 1}}]}))
 
-
 (defn num-users []
   (:item-count (far/describe-table (client-opts) :users)))
 
 (defn create-user
   [{:keys [username email password photo-url roles id] :as request}]
-  (far/put-item (client-opts) :users request))
+  (try
+    (far/put-item (client-opts) :users request
+                  {:expected {:id false}})
+    ;; {:return :all-new} doesn't seem to be working
+    [request nil]
+    (catch ConditionalCheckFailedException e
+      [nil "id already exists"])))
 
 (defn get-user [key value]
   (case key
@@ -45,4 +51,3 @@
     :username
     (seq (far/scan (client-opts) :users
                    {:attr-conds {:username [:eq value]}}))))
-    
