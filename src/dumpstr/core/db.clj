@@ -37,9 +37,9 @@
     (far/put-item (client-opts) :users request
                   {:expected {:id false}})
     ;; {:return :all-new} doesn't seem to be working
-    [request nil]
+    (assoc request :success true)
     (catch ConditionalCheckFailedException e
-      [nil "id already exists"])))
+      {:success false :err "id already exists"})))
 
 (defn get-user [key value]
   (case key

@@ -30,14 +30,9 @@
       :else
       (let [roles (if (should-be-admin? username)
                     #{:admin :user} #{:user})
-            password (creds/hash-bcrypt (:password params))
-            [user err] (db/create-user (assoc params :roles roles
-                                              :password password))]
-        (if user
-          (assoc (select-keys user returned-user-keys)
-                 :roles roles
-                 :success true)
-          {:success false :err err})))))
+            password (creds/hash-bcrypt (:password params))]
+        (db/create-user
+         (assoc params :roles roles :password password))))))
 
 ;; (defn create-user [{:keys [username email id] :as params}]
 ;;   (let [id (or id (generate-uuid))
