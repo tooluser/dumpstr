@@ -93,7 +93,7 @@
             (:success (do
                         (create-user {:id "1", :email "samers@test.com"
                                       :password "s"})
-                        (create-user {:id "2", :username "samers@test.com"
+                        (create-user {:id "2", :email "samers@test.com"
                                       :password "s"}))) =>
                                       falsey)
        ;; How to test this here?

@@ -2,6 +2,8 @@
   (:require
    (cemerick.friend [workflows :as workflows]
                     [credentials :as creds])
+   [clj-time.core :as t]
+   [clj-time.coerce :as tc]
    [dumpstr.core.db :as db]))
 
 ;;(derive ::admin ::user)
@@ -19,8 +21,7 @@
 (defn- should-be-admin? [user]
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
-
-(defn create-user [{:keys [username email id] :as params}]
+(defn- create-new-user [{:keys [username email id] :as params}]
   (let [id (or id (generate-uuid))
         params (select-keys (assoc params :id id) valid-user-keys)]
     (cond
@@ -32,29 +33,27 @@
                     #{:admin :user} #{:user})
             password (creds/hash-bcrypt (:password params))]
         (db/create-user
-         (assoc params :roles roles :password password))))))
+         (assoc params
+                :roles roles
+                :password password
+                :timestamp (tc/to-long (t/now))))))))
 
-;; (defn create-user [{:keys [username email id] :as params}]
-;;   (let [id (or id (generate-uuid))
-;;         params (assoc params :id id)
-;;         resp {:username username :email email :id id}]
-;;     (cond
-;;       (db/get-user :username username)
-;;       (assoc resp :success false :error "Username already exists")
-;;       (db/get-user :email email)
-;;       (assoc resp :success false :error "Email already exists")
-;;       (and id (db/get-user :id id))
-;;       (assoc resp :success false :error "ID already exists")
-;;       (not (reduce #(and %1 (contains? params %2))
-;;                    true required-user-keys))
-;;       (assoc resp :success false :error "Incomplete request")
-;;       :else (let [roles (if (should-be-admin? username)
-;;                           #{:admin :user} #{:user})
-;;                   password (creds/hash-bcrypt (:password params))
-;;                   user (select-keys params valid-user-keys)]
-;;               (db/create-user (assoc user :roles roles :password password))
-;;               (assoc resp :success true)))))
+(defn- oldest-user [tag param]
+  (first (sort-by :timestamp (db/get-user tag param))))
 
+(defn create-user
+  [{:keys [email username] :as params}]
+  (let [user (create-new-user params)
+        ts (:timestamp user)]
+    (cond
+      (not (:success user))
+      user
+      (and email (not= (:timestamp (oldest-user :email email)) ts))
+      {:success false, :error "Email already exists"}
+      (and username (not= (:timestamp (oldest-user :username username)) ts))
+      {:success false, :error "Username already exists"}
+      :else
+      (assoc user :success true))))
 
 (defn get-user [field user]
   (if (contains? queriable-tags field)
