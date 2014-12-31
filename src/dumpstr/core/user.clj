@@ -49,13 +49,19 @@
       (not (:success user))
       user
       (and email (not= (:timestamp (oldest-user :email email)) ts))
-      {:success false, :error "Email already exists"}
+      (do
+        (db/delete-user-id (:id user))
+        {:success false, :error "Email already exists"})
       (and username (not= (:timestamp (oldest-user :username username)) ts))
-      {:success false, :error "Username already exists"}
+      (do
+        (db/delete-user-id (:id user))
+        {:success false, :error "Username already exists"})
       :else
       (assoc user :success true))))
 
-(defn get-user [field user]
-  (if (contains? queriable-tags field)
-    (assoc (first (db/get-user field user)) :success true)
+(defn get-user [tag value]
+  (if (contains? queriable-tags tag)
+    (if-let [user (first (db/get-user tag value))]
+      (assoc user :success true)
+      {:success false, :error "No such user"})
     {:success false, :error "Bad query"}))

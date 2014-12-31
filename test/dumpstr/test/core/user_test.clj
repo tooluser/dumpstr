@@ -96,8 +96,25 @@
                         (create-user {:id "2", :email "samers@test.com"
                                       :password "s"}))) =>
                                       falsey)
-       ;; How to test this here?
-       ;;        (fact "Race condition for dupe username resolves correctly" true => falsey))
+        (fact "User created with dupe username is removed from DB"
+              (do
+                (create-user {:id "1", :username "samers"
+                              :password "s"})
+                (create-user {:id "2", :username "samers"
+                              :password "s"})
+                (rest (get-user :username "samers"))) => falsey)
+        (fact "User created with dupe email is removed from DB"
+              (do
+                (create-user {:id "1", :email "samers"
+                              :password "s"})
+                (create-user {:id "2", :email "samers"
+                              :password "s"})
+                (rest (get-user :email "samers"))) => falsey)
+        (fact "Getting non-existent user fails"
+              (get-user :id "202") => {:success false,
+                                     :error "No such user"})
+        ;; How to test this here?
+        ;;        (fact "Race condition for dupe username resolves correctly" true => falsey))
         ))
 
 (facts "About get-user"
