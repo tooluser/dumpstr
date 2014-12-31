@@ -28,6 +28,9 @@
                  :projection :all
                  :throughput {:read 1 :write 1}}]}))
 
+(defn delete-tables []
+  (far/delete-table (client-opts) :users))
+
 (defn num-users []
   (:item-count (far/describe-table (client-opts) :users)))
 
@@ -40,7 +43,7 @@
     ;; {:return :all-new} doesn't seem to be working
     (assoc request :success true)
     (catch ConditionalCheckFailedException e
-      {:success false :err "id already exists"})))
+      {:success false :error "Id already exists"})))
 
 (defn get-user [key value]
   (case key

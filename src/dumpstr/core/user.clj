@@ -18,6 +18,14 @@
 
 (defn- generate-uuid [] (str (java.util.UUID/randomUUID)))
 
+(defn- success
+  ([] (success {}))
+  ([m] (assoc m :success true)))
+
+(defn- failure
+  ([err] (failure {} err))
+  ([m err] (into m {:success false :error err})))
+
 (defn- should-be-admin? [user]
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
@@ -27,7 +35,7 @@
     (cond
       (not (reduce #(and %1 (contains? params %2))
                    true required-user-keys))
-      (assoc params :success false :error "Incomplete request")
+      (failure params "Incomplete request")
       :else
       (let [roles (if (should-be-admin? username)
                     #{:admin :user} #{:user})
@@ -51,17 +59,17 @@
       (and email (not= (:timestamp (oldest-user :email email)) ts))
       (do
         (db/delete-user-id (:id user))
-        {:success false, :error "Email already exists"})
+        (failure "Email already exists"))
       (and username (not= (:timestamp (oldest-user :username username)) ts))
       (do
         (db/delete-user-id (:id user))
-        {:success false, :error "Username already exists"})
+        (failure "Username already exists"))
       :else
-      (assoc user :success true))))
+      (success user))))
 
 (defn get-user [tag value]
   (if (contains? queriable-tags tag)
     (if-let [user (first (db/get-user tag value))]
-      (assoc user :success true)
-      {:success false, :error "No such user"})
-    {:success false, :error "Bad query"}))
+      (success user)
+      (failure "No such user"))
+    (failure "Bad query")))
