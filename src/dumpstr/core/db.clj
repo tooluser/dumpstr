@@ -52,3 +52,6 @@
     :username
     (seq (far/scan (client-opts) :users
                    {:attr-conds {:username [:eq value]}}))))
+
+(defn delete-user-id [id]
+  (far/delete-item (client-opts) :users {:id id}))

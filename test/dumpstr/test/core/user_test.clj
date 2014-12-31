@@ -102,14 +102,14 @@
                               :password "s"})
                 (create-user {:id "2", :username "samers"
                               :password "s"})
-                (rest (get-user :username "samers"))) => falsey)
+                (:success (get-user :id "2"))) => falsey)
         (fact "User created with dupe email is removed from DB"
               (do
                 (create-user {:id "1", :email "samers"
                               :password "s"})
                 (create-user {:id "2", :email "samers"
                               :password "s"})
-                (rest (get-user :email "samers"))) => falsey)
+                (:success (get-user :id "2"))) => falsey)
         (fact "Getting non-existent user fails"
               (get-user :id "202") => {:success false,
                                      :error "No such user"})
