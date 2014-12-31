@@ -8,7 +8,7 @@
 (defn client-opts []
   {:access-key "ACCESS_KEY"
    :secret-key "SECRET_KEY"
-   :endpoint "http://localhost:8081"})
+   :endpoint "http://localhost:8000"})
 
 (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 
@@ -32,9 +32,10 @@
   (:item-count (far/describe-table (client-opts) :users)))
 
 (defn create-user
-  [{:keys [username email password photo-url roles id] :as request}]
+  [{:keys [roles] :as request}]
   (try
-    (far/put-item (client-opts) :users request
+    (far/put-item (client-opts) :users
+                  (assoc request :roles (far/freeze roles))
                   {:expected {:id false}})
     ;; {:return :all-new} doesn't seem to be working
     (assoc request :success true)
