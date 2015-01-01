@@ -47,7 +47,7 @@
                 :timestamp (tc/to-long (t/now))))))))
 
 (defn- oldest-user [tag param]
-  (first (sort-by :timestamp (db/get-user tag param))))
+  (first (sort-by :timestamp (db/get-user tag param {:consistent? true}))))
 
 (defn create-user
   [{:keys [email username] :as params}]

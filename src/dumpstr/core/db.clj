@@ -45,16 +45,19 @@
     (catch ConditionalCheckFailedException e
       {:success false :error "Id already exists"})))
 
-(defn get-user [key value]
-  (case key
-    :id
-    [(far/get-item (client-opts) :users {:id value})]
-    :email
-    (seq (far/scan (client-opts) :users
-                   {:attr-conds {:email [:eq value]}}))
-    :username
-    (seq (far/scan (client-opts) :users
-                   {:attr-conds {:username [:eq value]}}))))
+(defn get-user [key value & [{:keys [consistent?]}]]
+  (let [consistent? {:consistent? consistent?}]
+    (case key
+      :id
+      [(far/get-item (client-opts) :users {:id value}) consistent?]
+      :email
+      (seq (far/scan (client-opts) :users
+                     {:attr-conds {:email [:eq value]}}
+                     consistent?))
+      :username
+      (seq (far/scan (client-opts) :users
+                     {:attr-conds {:username [:eq value]}}
+                      consistent?)))))
 
 (defn delete-user-id [id]
   (far/delete-item (client-opts) :users {:id id}))
