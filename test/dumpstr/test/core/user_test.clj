@@ -1,6 +1,7 @@
 (ns dumpstr.test.core.user-test
   (:use midje.sweet)
   [:require
+   [clojure.java.io :as jio]
    [dumpstr.core.user :refer :all]
    [me.raynes.conch.low-level :as sh]
    [dumpstr.core.db :as db]])
@@ -13,10 +14,11 @@
 (background (db/client-opts) => test-clientopts)
 
 (defn- start-local-ddb []
-  (let [proc (sh/proc "java"
-                      "-Djava.library.path=/Users/dangit/.homebrew/Cellar/dynamodb-local/2014-10-07/libexec/DynamodbLocal_lib"
+  (let [ddb (jio/resource "ddb")
+        proc (sh/proc "java"
+                      (str "-Djava.library.path=" (.getPath ddb) "/DynamodbLocal_lib")
                       "-jar"
-                      "/Users/dangit/.homebrew/Cellar/dynamodb-local/2014-10-07/libexec/DynamoDBLocal.jar"
+                      (str (.getPath ddb) "/DynamoDBLocal.jar")
                       "-inMemory"
                       "-port"
                       "8080")]
