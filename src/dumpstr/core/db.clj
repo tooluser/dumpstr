@@ -1,6 +1,7 @@
 (ns dumpstr.core.db
   (:require
-   [taoensso.faraday :as far])
+   [taoensso.faraday :as far]
+   [clojure.string :as string])
   (:import  [com.amazonaws.auth BasicAWSCredentials]
             [com.amazonaws.services.dynamodbv2.model ConditionalCheckFailedException]))
 
@@ -18,46 +19,89 @@
    :users
    [:id :s]
    {:throughput {:read 1 :write 1}
-    :block? true
-    :gsindexes [{:name "username"
-                 :hash-keydef [:username :s]
-                 :projection :all
-                 :throughput {:read 1 :write 1}}
-                {:name "email"
-                 :hash-keydef [:email :s]
-                 :projection :all
-                 :throughput {:read 1 :write 1}}]}))
+    :block? true})
+  (far/create-table
+   (client-opts)
+   :emails
+   [:email :s]
+   {:throughput {:read 1 :write 1}
+    :block? true})
+  (far/create-table
+   (client-opts)
+   :usernames
+   [:username :s]
+   {:throughput {:read 1 :write 1}
+    }))
 
 (defn delete-tables []
-  (far/delete-table (client-opts) :users))
+  (far/delete-table (client-opts) :users)
+  (far/delete-table (client-opts) :emails)
+  (far/delete-table (client-opts) :usernames))
 
 (defn num-users []
   (:item-count (far/describe-table (client-opts) :users)))
 
-(defn create-user
-  [{:keys [roles] :as request}]
+(def param-table {:email :emails, :username :usernames})
+
+(defn check-param [tag request]
+  (try
+    (when (request tag)
+      (far/put-item (client-opts) (param-table tag)
+                    {tag (request tag) :id (request :id)}
+                    {:expected {tag false}}))
+    true
+    (catch ConditionalCheckFailedException e
+      nil)))
+
+(defn create-user-record
+  [{:keys [email username id roles] :as request}]
   (try
     (far/put-item (client-opts) :users
                   (assoc request :roles (far/freeze roles))
                   {:expected {:id false}})
-    ;; {:return :all-new} doesn't seem to be working
     (assoc request :success true)
     (catch ConditionalCheckFailedException e
-      {:success false :error "Id already exists"})))
+         (when username
+           (far/delete-item (client-opts)
+                            :usernames {:username username}))
+         (when email
+           (far/delete-item (client-opts)
+                            :emails {:email email}))
+         {:success false, :error "Id already exists"})))
+
+(defn create-user-with-unique-fields [[tag & rest-of-tags] request]
+  (if (nil? tag)
+    (create-user-record request)
+    (if (check-param tag request)
+      (recur rest-of-tags request)
+      {:success false
+       :error (string/capitalize
+               (str (name tag) " already exists"))})))
+
+(defn create-user
+  [request]
+  (create-user-with-unique-fields [:email :username] request))
 
 (defn get-user [key value & [{:keys [consistent?]}]]
   (let [consistent? {:consistent? consistent?}]
     (case key
       :id
-      [(far/get-item (client-opts) :users {:id value}) consistent?]
+      (far/get-item (client-opts) :users {:id value} consistent?)
       :email
-      (seq (far/scan (client-opts) :users
-                     {:attr-conds {:email [:eq value]}}
-                     consistent?))
+      (if-let [id (:id (far/get-item (client-opts)
+                                     :emails {:email value}
+                                     consistent?))]
+        (get-user :id id)
+        nil)
       :username
-      (seq (far/scan (client-opts) :users
-                     {:attr-conds {:username [:eq value]}}
-                      consistent?)))))
+      (if-let [id (:id (far/get-item (client-opts)
+                                     :usernames {:username value}
+                                     consistent?))]
+        (get-user :id id)
+        nil))))
 
 (defn delete-user-id [id]
-  (far/delete-item (client-opts) :users {:id id}))
+  (let [{:keys [email username]} (get-user :id id)]
+    (far/delete-item (client-opts) :emails {:email email})
+    (far/delete-item (client-opts) :usernames {:username username})
+    (far/delete-item (client-opts) :users {:id id})))
