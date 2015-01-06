@@ -32,6 +32,7 @@
   (:roles  (create-user {:username un
                          :email (str un "@test.com")
                          :password "secret"})))
+
 (against-background
  [(around :contents
           (let [ddb-proc (start-local-ddb)]

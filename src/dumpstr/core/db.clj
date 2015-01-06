@@ -82,23 +82,18 @@
   [request]
   (create-user-with-unique-fields [:email :username] request))
 
+(defn- get-user-id [key value consistent?]
+  (:id (far/get-item (client-opts) (param-table key) {key value}
+                     consistent?)))
+
 (defn get-user [key value & [{:keys [consistent?]}]]
   (let [consistent? {:consistent? consistent?}]
-    (case key
-      :id
+    (cond
+      (nil? value) nil
+      (= key :id)
       (far/get-item (client-opts) :users {:id value} consistent?)
-      :email
-      (if-let [id (:id (far/get-item (client-opts)
-                                     :emails {:email value}
-                                     consistent?))]
-        (get-user :id id)
-        nil)
-      :username
-      (if-let [id (:id (far/get-item (client-opts)
-                                     :usernames {:username value}
-                                     consistent?))]
-        (get-user :id id)
-        nil))))
+      :else
+      (get-user :id (get-user-id key value consistent?)))))
 
 (defn delete-user-id [id]
   (let [{:keys [email username]} (get-user :id id)]
