@@ -46,6 +46,12 @@
                 :password password
                 :timestamp (tc/to-long (t/now))))))))
 
+(defn modify-user
+  [{:keys [id] :as  request}]
+  (if (nil? id)
+    {:success false :error "Bad request"}
+    (db/modify-user request)))
+
 (defn get-user [tag value]
   (if (contains? queriable-tags tag)
     (if-let [user (db/get-user tag value)]
