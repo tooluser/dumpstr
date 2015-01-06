@@ -2,6 +2,7 @@
   (:use midje.sweet)
   (:require [clojure.test :refer :all]
             [ring.mock.request :as mock]
+            [dumpstr.core.util :as util]
             [dumpstr.core.handler :refer :all]))
 
 (fact "Nonsense is served at root"
@@ -9,9 +10,11 @@
         status => 200
         body => #"l¡ttr"))
 
-;; (fact "Proper version is returned"
-;;       (let [response (app (mock/request :get "/info"))]
-;;         (response :status) => 200))
+(fact "Proper version is returned"
+      (let [response (app (mock/request :get "/info"))]
+        (response :status) => 200
+        (response :body) =>
+        (contains (str "API version: " util/project-version))))
 
 
 
