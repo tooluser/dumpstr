@@ -32,6 +32,7 @@
   (:roles  (create-user {:username un
                          :email (str un "@test.com")
                          :password "secret"})))
+
 (against-background
  [(around :contents
           (let [ddb-proc (start-local-ddb)]
@@ -55,6 +56,14 @@
                  id       => "1"
                  username => "joe"
                  email    => "joe@bob.com"))
+         (fact "Can create user with just username"
+               (:success (create-user {:id "1"
+                                       :username "joe"
+                                       :password "s"})) => truthy)
+         (fact "Can create user with just email"
+               (:success (create-user {:id "1"
+                                       :email "joe"
+                                       :password "s"})) => truthy)
          (fact "No password is returned"
                (let [response (create-user {:username "sally"
                                             :password "secret"})]
@@ -121,9 +130,24 @@
                  (create-user {:id "2", :email "samers"
                                :password "s"})
                  (:success (get-user :id "2"))) => falsey)
-         (fact "Getting non-existent user fails"
-               (get-user :id "202") => {:success false,
-                                        :error "No such user"})
+         (fact "Dupe email leaves username available"
+               (:success
+                (do (create-user {:id "1" :email "samers"
+                                  :username "un1" :passowrd "x"})
+                    (create-user {:id "2" :email "samers"
+                                  :username "un2" :passwowrd "x"})
+                    (create-user {:id "3" :email "differs"
+                                  :username "un2" :password "x"})))
+               => truthy)
+         (fact "Dupe username leaves email available"
+               (:success
+                (do (create-user {:id "1" :email "myemail"
+                                  :username "samers" :passowrd "x"})
+                    (create-user {:id "2" :email "another"
+                                  :username "samers" :passwowrd "x"})
+                    (create-user {:id "3" :email "another"
+                                  :username "differs" :password "x"})))
+               => truthy)
          ;; How to test this here?
          ;;        (fact "Race condition for dupe username resolves correctly" true => falsey))
          ))
@@ -162,5 +186,14 @@
                (:success (create-user {:username "tbutton"
                                        :password "secret"
                                        :rando "sauce"})) => truthy
-                                       (:rando (get-user :username "tbutton")) => falsey))))
+                                       (:rando (get-user :username "tbutton")) => falsey)
+         (fact "Getting non-existent user fails"
+               (get-user :id "202") => {:success false,
+                                        :error "No such user"})
+         (fact "Getting non-existent username fails"
+               (get-user :username "Nobody") => {:success false,
+                                                 :error "No such user"})
+         (fact "Getting non-existent email fails"
+               (get-user :email "nuttin") => {:success false,
+                                              :error "No such user"}))))
 

@@ -29,7 +29,7 @@
 (defn- should-be-admin? [user]
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
-(defn- create-new-user [{:keys [username email id] :as params}]
+(defn create-user [{:keys [username email id] :as params}]
   (let [id (or id (generate-uuid))
         params (select-keys (assoc params :id id) valid-user-keys)]
     (cond
@@ -46,30 +46,9 @@
                 :password password
                 :timestamp (tc/to-long (t/now))))))))
 
-(defn- oldest-user [tag param]
-  (first (sort-by :timestamp (db/get-user tag param {:consistent? true}))))
-
-(defn create-user
-  [{:keys [email username] :as params}]
-  (let [user (create-new-user params)
-        ts (:timestamp user)]
-    (cond
-      (not (:success user))
-      user
-      (and email (not= (:timestamp (oldest-user :email email)) ts))
-      (do
-        (db/delete-user-id (:id user))
-        (failure "Email already exists"))
-      (and username (not= (:timestamp (oldest-user :username username)) ts))
-      (do
-        (db/delete-user-id (:id user))
-        (failure "Username already exists"))
-      :else
-      (success user))))
-
 (defn get-user [tag value]
   (if (contains? queriable-tags tag)
-    (if-let [user (first (db/get-user tag value))]
+    (if-let [user (db/get-user tag value)]
       (success user)
       (failure "No such user"))
     (failure "Bad query")))
