@@ -1,5 +1,5 @@
-(defproject dumpstr "0.1.0"
-  :description "FIXME: write description"
+(defproject dumpstr "0.1.0-SNAPSHOT"
+  :description "Littr backend"
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
   :dependencies [[com.taoensso/faraday "1.5.0"

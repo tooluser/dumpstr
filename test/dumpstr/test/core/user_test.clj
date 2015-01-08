@@ -93,43 +93,43 @@
                                                      {:success false
                                                       :error "Incomplete request"}))
          (fact "User created with dupe id fails"
-               (do
-                 (create-user {:id "1", :username "samers"
-                               :password "s"})
-                 (create-user {:id "1", :username "differs"
-                               :password "s"})) => (contains
-                                                    {:success false
-                                                     :error "Id already exists"}))
+               (:success (create-user {:id "1", :username "samers"
+                                       :password "s"})) => truthy
+               (create-user
+                {:id "1", :username "differs" :password "s"})
+               => (contains {:success false :error "Id already exists"}))
          (fact "User created with dupe username fails"
-               (do
-                 (create-user {:id "1", :username "samers"
-                               :password "s"})
-                 (create-user {:id "2", :username "samers"
-                               :password "s"})) => (contains
-                                                    {:success false
-                                                     :error "Username already exists"}))
+               (:success (create-user {:id "1", :username "samers"
+                                       :password "s"})) => truthy
+               (create-user
+                {:id "2", :username "samers" :password "s"})
+               => (contains
+                   {:success false :error "Username already exists"}))
          (fact "User created with dupe email fails"
-               (do
-                 (create-user {:id "1", :email "samers@test.com"
-                               :password "s"})
-                 (create-user {:id "2", :email "samers@test.com"
-                               :password "s"})) => (contains
-                                                    {:success false
-                                                     :error "Email already exists"}))
+               (:success
+                (create-user
+                 {:id "1", :email "samers@test.com":password "s"}))
+               => truthy
+               (create-user
+                {:id "2", :email "samers@test.com" :password "s"})
+               => (contains
+                   {:success false :error "Email already exists"}))
          (fact "User created with dupe username is removed from DB"
-               (do
-                 (create-user {:id "1", :username "samers"
-                               :password "s"})
-                 (create-user {:id "2", :username "samers"
-                               :password "s"})
-                 (:success (get-user :id "2"))) => falsey)
+               (:success
+                (create-user {:id "1", :username "samers"
+                              :password "s"})) => truthy
+               (:succcess
+                (create-user {:id "2", :username "samers"
+                              :password "s"})) => falsey
+               (:success (get-user :id "2")) => falsey)
          (fact "User created with dupe email is removed from DB"
-               (do
-                 (create-user {:id "1", :email "samers"
-                               :password "s"})
-                 (create-user {:id "2", :email "samers"
-                               :password "s"})
-                 (:success (get-user :id "2"))) => falsey)
+               (:success
+                (create-user {:id "1", :email "samers"
+                              :password "s"})) => truthy
+               (:success
+                (create-user {:id "2", :email "samers"
+                              :password "s"})) => falsey
+               (:success (get-user :id "2")) => falsey)
          (fact "Dupe email leaves username available"
                (:success
                 (do (create-user {:id "1" :email "samers"
@@ -150,7 +150,7 @@
                => truthy)
          ;; How to test this here?
          ;;        (fact "Race condition for dupe username resolves correctly" true => falsey))
-         ))
+        ))
 
  (facts "About get-user"
         (against-background
@@ -200,5 +200,80 @@
                                                  :error "No such user"})
          (fact "Getting non-existent email fails"
                (get-user :email "nuttin") => {:success false,
-                                              :error "No such user"}))))
+                                              :error "No such user"})))
+ (facts "About modify-user"
+        (against-background
+         [(around
+           :facts
+           (do
+             (db/create-tables)
+             ?form
+             (db/delete-tables)))]
+         (fact "Can modify email"
+               (:success (create-user
+                 {:id "me" :email "em@place.com" :password "x"})) =>
+                 truthy
+               (modify-user {:id "me" :email "new@place.com"})
+               => {:id "me" :email "new@place.com" :success true}
+               (get-user :id "me")
+               => (contains {:id "me" :email "new@place.com"})
+               (get-user :email "new@place.com")
+               => (contains {:id "me"})
+               (get-user :email "em@place.com")
+               => {:success false :error "No such user"})
+         (fact "Can modify username"
+               (:success (create-user
+                 {:id "me" :username "remus" :password "x"})) =>
+                 truthy
+               (modify-user {:id "me" :username "romulus"})
+               => {:id "me" :username "romulus" :success true}
+               (get-user :id "me") => (contains {:username "romulus"})
+               (get-user :username "remus")
+               => {:success false :error "No such user"}
+               (get-user :username "romulus")
+               => (contains {:id "me"}))
+         (fact "Id required"
+               (:success (create-user
+                          {:id "me" :username "anansi"
+                           :email "anansi@me.com" :password "x"}))
+               => truthy
+               (modify-user {:username "anansi"
+                             :email "something@you.com"})
+               => {:success false :error "Bad request"})
+         (fact "Can't modify non-existent user"
+               (modify-user {:id "anything" :username "someone"})
+               => {:success false :error "No such user"})
+         (fact "Modifying username perserves other fields"
+               (:success (create-user
+                          {:id "me" :username "anansi"
+                           :email "anansi@me.com" :password "x"}))
+               => truthy
+               (:success (modify-user {:id "me" :username "ansy"}))
+               => truthy
+               (get-user :id "me")
+               => (contains {:email "anansi@me.com"}))))
+
+ (facts "About delete-user"
+        (against-background
+         [(around
+           :facts
+           (do
+             (db/create-tables)
+             ?form
+             (db/delete-tables)))]
+         (fact "Can delete a user"
+               (:success
+                (create-user {:id "007" :username "joe"
+                              :email "joe@bob.com" :password "x"}))
+               => truthy
+               (delete-user "007") => {:success true}
+               (get-user :id "007")
+               => {:success false :error "No such user"}
+               (get-user :username "joe")
+               => {:success false :error "No such user"}
+               (get-user :email "joe@bob.com")
+               => {:success false :error "No such user"})
+         (fact "Deleting non-existant looks like a pass"
+               (delete-user "008")
+               => {:success true}))))
 

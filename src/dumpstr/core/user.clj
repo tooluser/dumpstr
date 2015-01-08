@@ -22,6 +22,12 @@
   ([] (success {}))
   ([m] (assoc m :success true)))
 
+(defn- maybe-success
+  [{:keys [suc] :as m} ]
+  (if-not (= suc false)
+    (success m)
+    m))
+
 (defn- failure
   ([err] (failure {} err))
   ([m err] (into m {:success false :error err})))
@@ -46,9 +52,19 @@
                 :password password
                 :timestamp (tc/to-long (t/now))))))))
 
+(defn modify-user
+  [{:keys [id] :as  request}]
+  (let [request (select-keys request valid-user-keys)]
+    (if (nil? id)
+      {:success false :error "Bad request"}
+      (db/modify-user request))))
+
 (defn get-user [tag value]
   (if (contains? queriable-tags tag)
     (if-let [user (db/get-user tag value)]
       (success (select-keys user returned-user-keys))
       (failure "No such user"))
     (failure "Bad query")))
+
+(defn delete-user [id]
+  (maybe-success (db/delete-user-id id)))
