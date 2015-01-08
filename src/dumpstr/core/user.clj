@@ -49,6 +49,6 @@
 (defn get-user [tag value]
   (if (contains? queriable-tags tag)
     (if-let [user (db/get-user tag value)]
-      (success user)
+      (success (select-keys user returned-user-keys))
       (failure "No such user"))
     (failure "Bad query")))

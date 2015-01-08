@@ -176,6 +176,11 @@
                      response (get-user :email "t1@t.com")]
                  (:success response) => truthy
                  (:id response) => (:id created)))
+         (fact "Password is not returned"
+               (:success (create-user {:username "tbutton"
+                                       :password "secret"
+                                       :rando "sauce"})) => truthy
+               (:password (get-user :username "tbutton")) => falsey)
          (fact "Cannot lookup user by random tag"
                (let [created (create-user {:username "t2"
                                            :password "secret"
