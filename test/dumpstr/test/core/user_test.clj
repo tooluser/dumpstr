@@ -273,7 +273,7 @@
                => {:success false :error "No such user"}
                (get-user :email "joe@bob.com")
                => {:success false :error "No such user"})
-         (fact "Deleting non-existant user returns something sane"
+         (fact "Deleting non-existant looks like a pass"
                (delete-user "008")
-               => {:success false :error "No such user"}))))
+               => {:success true}))))
 

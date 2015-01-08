@@ -22,6 +22,12 @@
   ([] (success {}))
   ([m] (assoc m :success true)))
 
+(defn- maybe-success
+  [{:keys [suc] :as m} ]
+  (if-not (= suc false)
+    (success m)
+    m))
+
 (defn- failure
   ([err] (failure {} err))
   ([m err] (into m {:success false :error err})))
@@ -61,4 +67,4 @@
     (failure "Bad query")))
 
 (defn delete-user [id]
-  (db/delete-user-id id))
+  (maybe-success (db/delete-user-id id)))

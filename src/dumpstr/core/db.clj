@@ -123,8 +123,10 @@
 
 (defn delete-user-id [id]
   (let [{:keys [email username]} (get-user :id id)]
-    (far/delete-item (client-opts) :emails {:email email})
-    (far/delete-item (client-opts) :usernames {:username username})
+    (when email
+      (far/delete-item (client-opts) :emails {:email email}))
+    (when username
+      (far/delete-item (client-opts) :usernames {:username username}))
     (far/delete-item (client-opts) :users {:id id})))
 
 
