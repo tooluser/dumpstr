@@ -48,9 +48,10 @@
 
 (defn modify-user
   [{:keys [id] :as  request}]
-  (if (nil? id)
-    {:success false :error "Bad request"}
-    (db/modify-user request)))
+  (let [request (select-keys request valid-user-keys)]
+    (if (nil? id)
+      {:success false :error "Bad request"}
+      (db/modify-user request))))
 
 (defn get-user [tag value]
   (if (contains? queriable-tags tag)
@@ -58,3 +59,6 @@
       (success (select-keys user returned-user-keys))
       (failure "No such user"))
     (failure "Bad query")))
+
+(defn delete-user [id]
+  (db/delete-user-id id))

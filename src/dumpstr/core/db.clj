@@ -82,6 +82,32 @@
   [request]
   (create-user-with-unique-fields [:email :username] request))
 
+(defn modify-user-record
+  [{:keys [email username id] :as request}
+   old-user]
+  (let [delete (fn [t v] (when v
+                           (far/delete-item
+                            (client-opts)
+                            (param-table t)
+                            {t v})))]
+    (far/update-item (client-opts) :users {:id id}
+                     (reduce-kv #(assoc %1 %2 [:put %3])
+                                {}
+                                (dissoc request :id)))
+    (delete :email (:email old-user))
+    (delete :username (:username old-user))
+    (assoc request :success true)))
+
+(defn modify-user-with-unique-fields
+  [[tag & rest-of-tags] request old-user]
+  (if (nil? tag)
+    (modify-user-record request old-user)
+    (if (check-param tag request)
+      (recur rest-of-tags request old-user)
+      {:success false
+       :error (string/capitalize
+               (str (name tag) " already exists"))})))
+
 (defn- get-user-id [key value consistent?]
   (:id (far/get-item (client-opts) (param-table key) {key value}
                      consistent?)))
@@ -100,3 +126,11 @@
     (far/delete-item (client-opts) :emails {:email email})
     (far/delete-item (client-opts) :usernames {:username username})
     (far/delete-item (client-opts) :users {:id id})))
+
+
+(defn modify-user [request]
+  (let [old-user (get-user :id (:id request))]
+    (if (nil? old-user)
+      {:success false :error "No such user"}
+      (modify-user-with-unique-fields [:email :username]
+                                      request old-user))))

@@ -213,23 +213,25 @@
                (:success (create-user
                  {:id "me" :email "em@place.com" :password "x"})) =>
                  truthy
-               (:success (modify-user {:id "me" :email "new@place.com"}))
-               => truthy
-               (get-user :id "me") => {:id "me" :email "em@place.com"}
+               (modify-user {:id "me" :email "new@place.com"})
+               => {:id "me" :email "new@place.com" :success true}
+               (get-user :id "me")
+               => (contains {:id "me" :email "new@place.com"})
                (get-user :email "new@place.com")
-               => {:success false :error "No such user"}
+               => (contains {:id "me"})
                (get-user :email "em@place.com")
-               => {:id "me"})
+               => {:success false :error "No such user"})
          (fact "Can modify username"
                (:success (create-user
                  {:id "me" :username "remus" :password "x"})) =>
                  truthy
-               (:success (modify-user {:id "me" :username "romulus"}))
-               => truthy
-               (get-user :id "me") => {:id "me" :username "romulus"}
+               (modify-user {:id "me" :username "romulus"})
+               => {:id "me" :username "romulus" :success true}
+               (get-user :id "me") => (contains {:username "romulus"})
                (get-user :username "remus")
                => {:success false :error "No such user"}
-               (get-user :username "romulus") => {:id "me"})
+               (get-user :username "romulus")
+               => (contains {:id "me"}))
          (fact "Id required"
                (:success (create-user
                           {:id "me" :username "anansi"
@@ -237,7 +239,19 @@
                => truthy
                (modify-user {:username "anansi"
                              :email "something@you.com"})
-               => {:success false :error "Bad request"})))
+               => {:success false :error "Bad request"})
+         (fact "Can't modify non-existent user"
+               (modify-user {:id "anything" :username "someone"})
+               => {:success false :error "No such user"})
+         (fact "Modifying username perserves other fields"
+               (:success (create-user
+                          {:id "me" :username "anansi"
+                           :email "anansi@me.com" :password "x"}))
+               => truthy
+               (:success (modify-user {:id "me" :username "ansy"}))
+               => truthy
+               (get-user :id "me")
+               => (contains {:email "anansi@me.com"}))))
 
  (facts "About delete-user"
         (against-background
@@ -258,5 +272,8 @@
                (get-user :username "joe")
                => {:success false :error "No such user"}
                (get-user :email "joe@bob.com")
+               => {:success false :error "No such user"})
+         (fact "Deleting non-existant user returns something sane"
+               (delete-user "008")
                => {:success false :error "No such user"}))))
 
