@@ -63,7 +63,7 @@
     (friend/authenticate
      {:allow-anon? true
       :unauthenticated-handler #(workflows/http-basic-deny "Littr" %)
-      :credential-fn (partial creds/bcrypt-credential-fn db/get-user)
+      :credential-fn (partial creds/bcrypt-credential-fn user/get-user)
       :workflows [(workflows/http-basic
                    :credential-fn #(creds/bcrypt-credential-fn
                                     (partial db/get-user :username)  %)
