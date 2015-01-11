@@ -136,3 +136,6 @@
       {:success false :error "No such user"}
       (modify-user-with-unique-fields [:email :username]
                                       request old-user))))
+
+(defn all-users []
+  (far/scan (client-opts) :users))

@@ -68,3 +68,6 @@
 
 (defn delete-user [id]
   (maybe-success (db/delete-user-id id)))
+
+(defn all-users []
+  (map #(dissoc % :password) (db/all-users)))

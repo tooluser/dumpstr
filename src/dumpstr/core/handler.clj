@@ -18,7 +18,8 @@
    [dumpstr.core.user :as user]))
 
 (defroutes admin-routes
-  (GET "/show-user/:user" [user] (admin/show-user user)))
+  (GET "/show-user/:user" [user] (admin/show-user user))
+  (GET "/all-users" [] (admin/all-users)))
 
 (defroutes user-routes
   (GET "/hi" [] (str "well hi, " (:username (friend/current-authentication))))
