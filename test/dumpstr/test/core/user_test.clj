@@ -47,12 +47,13 @@
              ?form
              (db/delete-tables)))]
          (fact "Can create a user"
-               (let [{:keys [success id username email]}
+               (let [{:keys [success error id username email]}
                      (create-user {:id "1",
                                    :username "joe",
                                    :email "joe@bob.com",
                                    :password "secret"})]
                  success  => truthy
+                 error    => nil
                  id       => "1"
                  username => "joe"
                  email    => "joe@bob.com"))

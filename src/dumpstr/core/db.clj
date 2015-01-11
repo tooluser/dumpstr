@@ -69,22 +69,21 @@
                             :emails {:email email}))
          {:success false, :error "Id already exists"})))
 
-(defn create-user-with-unique-fields [[tag & rest-of-tags] request]
+(defn do-with-unique-fields [action request [tag & rest-of-tags]]
   (if (nil? tag)
-    (create-user-record request)
+    (action request)
     (if (check-param tag request)
-      (recur rest-of-tags request)
+      (recur action request rest-of-tags)
       {:success false
-       :error (string/capitalize
-               (str (name tag) " already exists"))})))
+       :error (str (string/capitalize (name tag)) " already exists")})))
 
 (defn create-user
   [request]
-  (create-user-with-unique-fields [:email :username] request))
+  (do-with-unique-fields create-user-record request [:email :username]))
 
 (defn modify-user-record
-  [{:keys [email username id] :as request}
-   old-user]
+  [old-user
+   {:keys [email username id] :as request}]
   (let [delete (fn [t v] (when v
                            (far/delete-item
                             (client-opts)
@@ -97,16 +96,6 @@
     (delete :email (:email old-user))
     (delete :username (:username old-user))
     (assoc request :success true)))
-
-(defn modify-user-with-unique-fields
-  [[tag & rest-of-tags] request old-user]
-  (if (nil? tag)
-    (modify-user-record request old-user)
-    (if (check-param tag request)
-      (recur rest-of-tags request old-user)
-      {:success false
-       :error (string/capitalize
-               (str (name tag) " already exists"))})))
 
 (defn- get-user-id [key value consistent?]
   (:id (far/get-item (client-opts) (param-table key) {key value}
@@ -134,8 +123,8 @@
   (let [old-user (get-user :id (:id request))]
     (if (nil? old-user)
       {:success false :error "No such user"}
-      (modify-user-with-unique-fields [:email :username]
-                                      request old-user))))
+      (do-with-unique-fields (partial modify-user-record old-user)
+                             request [:email :username]))))
 
 (defn all-users []
   (far/scan (client-opts) :users))
