@@ -11,6 +11,7 @@
 ;;                 [com.cemerick/hiccup "1.0.5"];;
                  [hiccup "1.0.5"]
                  [cheshire "5.4.0"]
+                 [environ "1.0.0" :as env]
                  [com.amazonaws/aws-java-sdk "1.8.6"
                   :exclusions [joda-time]]
                  ]
