@@ -1,15 +1,21 @@
 (ns dumpstr.core.db
   (:require
    [taoensso.faraday :as far]
+   [environ.core :as env]
    [clojure.string :as string])
   (:import  [com.amazonaws.auth BasicAWSCredentials]
             [com.amazonaws.services.dynamodbv2.model ConditionalCheckFailedException]))
 
 ;; Local access only for now
 (defn client-opts []
-  {:access-key "ACCESS_KEY"
-   :secret-key "SECRET_KEY"
-   :endpoint "http://localhost:8000"})
+  (let [access-key (env/env :ddb-access-key)
+        secret-key (env/env :ddb-secret-key)]
+    (if (and access-key secret-key)
+      {:access-key access-key,
+       :secret-key secret-key}
+      {:access-key "ACCESS-KEY",
+       :secret-key "SECRET-KEY",
+       :endpoint "http://localhost:8000"})))
 
 (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 
