@@ -4,6 +4,7 @@
                     [credentials :as creds])
    [clj-time.core :as t]
    [clj-time.coerce :as tc]
+   [com.stuartsierra.component :as component]
    [dumpstr.core.db :as db]))
 
 ;;(derive ::admin ::user)
@@ -13,6 +14,19 @@
 (def returned-user-keys [:id :username :email :photo-url :roles])
 (def queriable-tags #{:id :username :email})
 
+(defrecord User [config db]
+  component/Lifecycle
+
+  (start [component]
+    (prn "Staring User")
+    (assoc component :db db))
+
+  (stop [component]
+    (prn "Stopping User")
+    (assoc component :db nil)))
+
+(defn new-user [config]
+  (map->User {:config config}))
 
 (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 
@@ -35,7 +49,7 @@
 (defn- should-be-admin? [user]
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
-(defn create-user [{:keys [username email id] :as params}]
+(defn create-user [user {:keys [username email id] :as params}]
   (let [id (or id (generate-uuid))
         params (select-keys (assoc params :id id) valid-user-keys)]
     (cond
@@ -46,7 +60,7 @@
       (let [roles (if (should-be-admin? username)
                     #{:admin :user} #{:user})
             password (creds/hash-bcrypt (:password params))]
-        (db/create-user
+        (db/create-user (:db user)
          (assoc params
                 :roles roles
                 :password password
@@ -66,8 +80,8 @@
       (failure "No such user"))
     (failure "Bad query")))
 
-(defn delete-user [id]
-  (maybe-success (db/delete-user-id id)))
+(defn delete-user [user id]
+  (maybe-success (db/delete-user-id (:db user) id)))
 
 (defn all-users []
   (map #(dissoc % :password) (db/all-users)))

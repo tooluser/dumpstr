@@ -71,6 +71,23 @@
 
 (def app (site secured-app))
 
+(defrecord HttpServer [port server user]
+  component/Lifecycle
+
+  (start [component]
+    (println "Starting HTTP Server")
+    (let [server (jetty/run-jetty app {:port port :join? false})]
+      (assoc component :server server)))
+
+  (stop [component]
+    (println "Stopping HTTPServer")
+    (.stop server)
+    component))
+
+(defn new-http-server
+  [port]
+  (map->HTTPServer {:port port}))
+
 ;; (define-clojure-indent
 ;;   (defroutes 'defun)
 ;;   (GET 2)
