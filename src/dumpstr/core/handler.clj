@@ -6,6 +6,9 @@
    [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
    [ring.middleware.session :as sess]
    [ring.util.response :as resp]
+   [ring.adapter.jetty :as jetty]
+   [ring.component.jetty :refer [jetty-server]]
+   [com.stuartsierra.component :as component]
    [hiccup.core :as h]
    [hiccup.element :as e]
    [cemerick.friend :as friend]
@@ -42,6 +45,7 @@
 
   ;; no auth required
   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
+  (GET "/dump" request [:h2 (str request)])
   (POST "/create-user" {:keys [params]}
         (build-json-response (user/create-user params)))
   (ANY "/info" [] (str "API version: " util/project-version))
@@ -70,6 +74,28 @@
                    :realm "Littr")]})))
 
 (def app (site secured-app))
+
+;; (defn http-server
+;;   [config]
+;;   (jetty-server {:app app :port (:port config)}))
+
+(defrecord HttpServer [port server user]
+  component/Lifecycle
+
+  (start [component]
+    (println "Starting HTTP Server")
+    (prn component)
+    (let [server (jetty/run-jetty app {:port port :join? false})]
+      (assoc component :server server)))
+
+  (stop [component]
+    (println "Stopping HTTPServer")
+    (.stop server)
+    component))
+
+(defn new-http-server
+  [port]
+  (map->HttpServer {:port port}))
 
 ;; (define-clojure-indent
 ;;   (defroutes 'defun)

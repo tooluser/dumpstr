@@ -1,10 +1,11 @@
 (ns dumpstr.test.core.user-test
   (:use midje.sweet)
   [:require
+   [clojure.test :refer :all]
    [clojure.java.io :as jio]
-   [dumpstr.core.user :refer :all]
    [me.raynes.conch.low-level :as sh]
-   [dumpstr.core.db :as db]])
+   [dumpstr.core.db :as db]
+   [dumpstr.core.user :refer :all]])
 
 (def test-clientopts
   {:access-key "ACCESS_KEY"
