@@ -4,6 +4,7 @@
                     [credentials :as creds])
    [clj-time.core :as t]
    [clj-time.coerce :as tc]
+   [clojure.set :as set]
    [dumpstr.core.db :as db]))
 
 ;;(derive ::admin ::user)
@@ -39,8 +40,7 @@
   (let [id (or id (generate-uuid))
         params (select-keys (assoc params :id id) valid-user-keys)]
     (cond
-      (not (reduce #(and %1 (contains? params %2))
-                   true required-user-keys))
+      (not (set/subset? required-user-keys (set (keys params))))
       (failure params "Incomplete request")
       :else
       (let [roles (if (should-be-admin? username)
