@@ -1,10 +1,13 @@
 (ns dumpstr.core.db
   (:require
    [taoensso.faraday :as far]
+   [taoensso.timber :as timbre]
    [environ.core :as env]
    [clojure.string :as string])
   (:import  [com.amazonaws.auth BasicAWSCredentials]
             [com.amazonaws.services.dynamodbv2.model ConditionalCheckFailedException]))
+
+(timbre/refer-timbre)
 
 ;; Local access only for now
 (defn client-opts []
@@ -20,6 +23,7 @@
 (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 
 (defn create-tables []
+  (report "Creating tables")
   (far/create-table
    (client-opts)
    :litter-users
@@ -40,6 +44,7 @@
     }))
 
 (defn delete-tables []
+  (report "Deleting tables")
   (far/delete-table (client-opts) :litter-users)
   (far/delete-table (client-opts) :littr-emails)
   (far/delete-table (client-opts) :littr-usernames))
@@ -57,10 +62,11 @@
                     {:expected {tag false}}))
     true
     (catch ConditionalCheckFailedException e
-      nil)))
+      (do (debug "tag exists" tag request) nil))))
 
 (defn create-user-record
   [{:keys [email username id roles] :as request}]
+  (debug "create-user-record" request)
   (try
     (far/put-item (client-opts) :litter-users
                   (assoc request :roles (far/freeze roles))
@@ -85,11 +91,13 @@
 
 (defn create-user
   [request]
+  (debug "create-user" request)
   (do-with-unique-fields create-user-record request [:email :username]))
 
 (defn modify-user-record
   [old-user
    {:keys [email username id] :as request}]
+  (debug "modify-user-record" old-user request)
   (let [delete (fn [t v] (when v
                            (far/delete-item
                             (client-opts)
@@ -108,6 +116,7 @@
                      consistent?)))
 
 (defn get-user [key value & [{:keys [consistent?]}]]
+  (debug "get-user" key value)
   (let [consistent? {:consistent? consistent?}]
     (cond
       (nil? value) nil
@@ -117,6 +126,7 @@
       (get-user :id (get-user-id key value consistent?)))))
 
 (defn delete-user-id [id]
+  (debug "delete-user-id" id)
   (let [{:keys [email username]} (get-user :id id)]
     (when email
       (far/delete-item (client-opts) :littr-emails {:email email}))

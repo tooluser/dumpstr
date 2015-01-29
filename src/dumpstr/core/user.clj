@@ -5,7 +5,10 @@
    [clj-time.core :as t]
    [clj-time.coerce :as tc]
    [clojure.set :as set]
+   [taoensso.timber :as timbre]
    [dumpstr.core.db :as db]))
+
+(timbre/refer-timbre)
 
 ;;(derive ::admin ::user)
 
@@ -37,13 +40,14 @@
   (or (zero? (db/num-users)) (#{"tooluser" "matt" "dan"} user)))
 
 (defn create-user [{:keys [username email id] :as params}]
+  (debug "create-user" params)
   (let [id (or id (generate-uuid))
         params (select-keys (assoc params :id id) valid-user-keys)]
     (cond
       (not (set/subset? required-user-keys (set (keys params))))
       (failure params "Incomplete request")
       :else
-      (let [roles (if (should-be-admin? username)
+      (let [roles (if (spy :debug (should-be-admin? username))
                     #{:admin :user} #{:user})
             password (creds/hash-bcrypt (:password params))]
         (db/create-user
@@ -54,12 +58,14 @@
 
 (defn modify-user
   [{:keys [id] :as  request}]
+  (debug "modify-user" request)
   (let [request (select-keys request valid-user-keys)]
     (if (nil? id)
       {:success false :error "Bad request"}
       (db/modify-user request))))
 
 (defn get-user [tag value]
+  (debug "get-user" tag value)
   (if (contains? queriable-tags tag)
     (if-let [user (db/get-user tag value)]
       (success (select-keys user returned-user-keys))
@@ -67,7 +73,9 @@
     (failure "Bad query")))
 
 (defn delete-user [id]
+  (debug "delete-user" id)
   (maybe-success (db/delete-user-id id)))
 
 (defn all-users []
+  (debug "all-users")
   (map #(dissoc % :password) (db/all-users)))
