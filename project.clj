@@ -6,7 +6,7 @@
                   :exclusions [org.clojure/clojure]]
                  [org.clojure/clojure "1.6.0"]
                  [compojure "1.3.1"]
-                 [ring/ring-defaults "0.1.2"]
+                 [ring/ring-defaults "0.1.3"]
                  [ring-jetty-component "0.2.2"]
                  [com.cemerick/friend "0.2.1"]
 ;;                 [com.cemerick/hiccup "1.0.5"];;

@@ -2,7 +2,6 @@
   (:require
    [compojure.core :refer :all]
    [compojure.route :as route]
-   [compojure.handler :refer (site)]
    [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
    [ring.middleware.session :as sess]
    [ring.util.response :as resp]
@@ -47,7 +46,7 @@
   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
   (GET "/dump" request [:h2 (str request)])
   (POST "/create-user" {:keys [params]}
-        (build-json-response (user/create-user params)))
+        (build-json-response (user/create-user (:user component) params)))
   (ANY "/info" [] (str "API version: " util/project-version))
   (friend/logout  (ANY "/logout" request (resp/redirect "/")))
 
@@ -72,6 +71,18 @@
                    :credential-fn #(creds/bcrypt-credential-fn
                                     (partial db/get-user :username)  %)
                    :realm "Littr")]})))
+
+(defn make-approutes
+  [component]
+  (routes
+   (GET "/" [] (h/html [:h1 "Go get some l¡ttr!!1!"]))
+   (GET "/dump" request [:h2 (str request)])
+   (POST "/create-user" {:keys [params]}
+         (build-json-response (user/create-user params)))
+   (ANY "/info" [] (str "API version: " util/project-version))))
+
+;; (def site
+;;   wrap-defaults handler site-defaults)
 
 (def app (site secured-app))
 
