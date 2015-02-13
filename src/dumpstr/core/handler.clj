@@ -86,16 +86,11 @@
 
 (def app (site secured-app))
 
-;; (defn http-server
-;;   [config]
-;;   (jetty-server {:app app :port (:port config)}))
-
 (defrecord HttpServer [port server user]
   component/Lifecycle
 
   (start [component]
     (println "Starting HTTP Server")
-    (prn component)
     (let [server (jetty/run-jetty app {:port port :join? false})]
       (assoc component :server server)))
 
@@ -107,6 +102,7 @@
 (defn new-http-server
   [port]
   (map->HttpServer {:port port}))
+  (map->HTTPServer {:port port}))
 
 ;; (define-clojure-indent
 ;;   (defroutes 'defun)
